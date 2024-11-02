@@ -1,0 +1,5 @@
+headcount_data.csv
+/detected_faces
+/api/node_modules
+yolov3.cfg
+yolov3.weights
