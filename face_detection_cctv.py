@@ -7,6 +7,9 @@ import os
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
 import csv
+import requests
+import base64
+import json
 
 # Create a directory to store detected faces
 os.makedirs("detected_faces", exist_ok=True)
@@ -29,6 +32,7 @@ def load_yolo_model():
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
     return net, output_layers
+
 
 # Detect people in the frame
 def detect_people_in_frame(frame, net, output_layers):
@@ -113,7 +117,26 @@ def load_face_detection_model():
     face_model = InceptionResnetV1(pretrained='vggface2').eval()  # Load pretrained FaceNet model
     return mtcnn, face_model
 
-# Step 5: Detect faces in a frame, save them, and compute embeddings
+def image_to_base64(image):
+    _, buffer = cv2.imencode('.jpg', image)
+    image_base64 = base64.b64encode(buffer).decode('utf-8')
+    return image_base64
+
+def similarity_query_api(img_base_64,embedding):
+    url = "http://localhost:5000/api/similarity_query_api"
+    headers = {'Content-Type':'application/json'}
+    data = {"file": img_base_64,"embedding":embedding.tolist()}
+    response = requests.post(url,headers=headers,json=data)
+    return response.json()
+
+def upload_to_collection_api(img_base_64,face_embedding,collection_type):
+    url = f"http://localhost:5000/api/upload_to_{collection_type}"
+    headers = {'Content-Type':'application/json'}
+    data = {"file": img_base_64, "embedding": face_embedding.tolist()}
+    response = requests.post(url,headers=headers,json=data)
+    return response.status_code==200
+
+
 def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     boxes, _ = mtcnn.detect(frame_rgb)
@@ -126,7 +149,7 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             try:
                 cv2.imwrite(face_filename, face)
             except Exception as e:
-                continue;
+                continue
             
             print(f"Saved detected face to {face_filename}")
 
@@ -135,17 +158,33 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             face_tensor = torch.from_numpy(face_rgb).permute(2, 0, 1).float().unsqueeze(0)
             face_embedding = face_model(face_tensor)
             print(face_filename," embedding = ",face_embedding)
+
+            img_base_64 = image_to_base64(face)
+            similarity_result = similarity_query_api(img_base_64,face_embedding)
+            is_match = similarity_result.get("is_matched",False)
+            collection_type = "Matched" if is_match else "unMatched"
+            if collection_type=="unMatched":
+                uploaded = upload_to_collection_api(img_base_64,face_embedding,collection_type)
+                if uploaded:
+                    print("Succesfully uploaded")
+                else:
+                    print("Uploading failed")
+        
             # Save the embedding as a .npy file
             # embedding_filename = f"detected_faces/frame_{frame_index}_face_{i + 1}_embedding.npy"
             # np.save(embedding_filename, face_embedding.detach().numpy())
             # print(f"Saved embedding to {embedding_filename}")
 
+
+            # call query
+            # push into collection wala api
+            
             cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
     return frame
 
 # Execution
-youtube_url = 'https://www.youtube.com/watch?v=50XLhaq3G94'
+youtube_url = 'https://www.youtube.com/watch?v=dN64IzvC8FI'
 stream_url = get_youtube_video_url(youtube_url)
 print("Stream URL:", stream_url)
 
