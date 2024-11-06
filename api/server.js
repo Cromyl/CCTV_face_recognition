@@ -30,9 +30,12 @@ app.use(cors({
 })
 
 app.post('/api/similarity_query_api', async (req,res)=>{
-    const {file,embeddings} = req.body
-    console.log("******************************************************************embedding*************************");
-    console.log(embeddings);
+    // const {file,embeddings} = req.body
+
+    // console.log("******************************************************************embedding*************************");
+    // // console.log(req.body)
+    // console.log(req.body.embedding)
+    // console.log(embeddings);
 
     try{
         const agg = [
@@ -40,7 +43,7 @@ app.post('/api/similarity_query_api', async (req,res)=>{
               '$vectorSearch': {
                 'index': 'vector_index',
                 'path': 'embeddings',
-                'queryVector': embeddings,
+                'queryVector': req.body.embedding,
                 'numCandidates': 150,
                 'limit': 1
               }
@@ -63,16 +66,16 @@ app.post('/api/similarity_query_api', async (req,res)=>{
         console.log("SCORE_____________",score);
         if(score>0.7){
             const obj = {
-                "file":file,
-                "embeddings":embeddings,
+                "file":req.body.file,
+                "embeddings":req.body.embedding,
                 "isMatched":true
             }
             return res.status(200).send(obj);
         }
         else{
             const obj = {
-                "file":file,
-                "embeddings":embeddings,
+                "file":req.body.file,
+                "embeddings":req.body.embedding,
                 "isMatched":false
             }
             return res.status(200).send(obj)
@@ -85,10 +88,10 @@ app.post('/api/similarity_query_api', async (req,res)=>{
 })
 app.post('/api/upload_to_unMatched',async (req,res)=>{
     try{
-        const {file,embeddings} = req.body;
+        // const {file,embeddings} = req.body;
         const obj ={
-            "file": file,
-            "embeddings":embeddings
+            "file": req.body.file,
+            "embeddings":req.body.embedding
         }
         const data = await unMatched.create(obj);
         await data.save();
@@ -102,8 +105,8 @@ app.post('/api/upload_to_Matched_if_recognised',async (req,res)=>{
     try{
         const {file,embeddings} = req.body;
         const obj ={
-            "file": file,
-            "embeddings":embeddings
+            "file": req.body.file,
+            "embeddings":req.body.embedding
         }
         const deleted = await unMatched.findOneAndDelete(obj);
         const data = await Matched.create(obj);
