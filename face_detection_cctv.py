@@ -125,14 +125,14 @@ def image_to_base64(image):
 def similarity_query_api(img_base_64,embedding):
     url = "http://localhost:5000/api/similarity_query_api"
     headers = {'Content-Type':'application/json'}
-    data = {"file": img_base_64,"embedding":embedding.tolist()}
+    data = {"file": img_base_64,"embedding":embedding}
     response = requests.post(url,headers=headers,json=data)
     return response.json()
 
 def upload_to_collection_api(img_base_64,face_embedding,collection_type):
     url = f"http://localhost:5000/api/upload_to_{collection_type}"
     headers = {'Content-Type':'application/json'}
-    data = {"file": img_base_64, "embedding": face_embedding.tolist()}
+    data = {"file": img_base_64, "embedding": face_embedding}
     response = requests.post(url,headers=headers,json=data)
     return response.status_code==200
 
@@ -157,19 +157,22 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             face_rgb = cv2.resize(face, (160, 160))
             face_tensor = torch.from_numpy(face_rgb).permute(2, 0, 1).float().unsqueeze(0)
             face_embedding = face_model(face_tensor)
-            print(face_filename," embedding = ",face_embedding)
-
+            print(face_filename," embedding = ",face_embedding[0].tolist())
+            embedding = face_embedding[0].tolist()
             img_base_64 = image_to_base64(face)
-            similarity_result = similarity_query_api(img_base_64,face_embedding)
+            similarity_result = similarity_query_api(img_base_64,embedding)
             is_match = similarity_result.get("is_matched",False)
             collection_type = "Matched" if is_match else "unMatched"
             if collection_type=="unMatched":
-                uploaded = upload_to_collection_api(img_base_64,face_embedding,collection_type)
+                uploaded = upload_to_collection_api(img_base_64,embedding,collection_type)
                 if uploaded:
                     print("Succesfully uploaded")
                 else:
                     print("Uploading failed")
         
+
+
+
             # Save the embedding as a .npy file
             # embedding_filename = f"detected_faces/frame_{frame_index}_face_{i + 1}_embedding.npy"
             # np.save(embedding_filename, face_embedding.detach().numpy())

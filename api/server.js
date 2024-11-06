@@ -31,6 +31,9 @@ app.use(cors({
 
 app.post('/api/similarity_query_api', async (req,res)=>{
     const {file,embeddings} = req.body
+    console.log("******************************************************************embedding*************************");
+    console.log(embeddings);
+
     try{
         const agg = [
             {
