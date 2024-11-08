@@ -97,7 +97,7 @@ app.post('/api/similarity_query_api', async (req,res)=>{
             score = elem.score;
         });
         console.log("SCORE_____________",score);
-        if(score>0.7){
+        if(score>0.97){
             const obj = {
                 // "file":req.body.file,
                 // "embeddings":req.body.embedding,
@@ -136,11 +136,13 @@ app.post('/api/upload_to_unMatched',async (req,res)=>{
 })
 app.post('/api/upload_to_Matched',async (req,res)=>{
     try{
-        const {file,embeddings} = req.body;
+        // const {file,embeddings} = req.body;
         const obj ={
             "file": req.body.file,
             "embeddings":req.body.embedding
         }
+        // console.log("INSIDE UPLOAD TO MATCHED **********************************************")
+        console.log(req.body.embedding)
         const deleted = await unMatched.findOneAndDelete(obj);
         const data = await Matched.create(obj);
         await data.save();
@@ -153,6 +155,7 @@ app.post('/api/upload_to_Matched',async (req,res)=>{
 app.get('/api/fetch_all_unMatched',async (req,res)=>{
     try {
         const doc = await unMatched.find({});
+        // console.log(doc);
         return res.status(200).json(doc);
     } catch (error) {
         console.error("Error fetching unmatched documents:", error);
