@@ -1,5 +1,6 @@
 import express from "express";
 import connect from "./database/conn.js";
+import net from 'net';
 // import Post from "./model/post.js";
 import cors from "cors";
 import { model1 as Matched, model2 as unMatched } from "./model/post.js";
@@ -10,6 +11,7 @@ import { model1 as Matched, model2 as unMatched } from "./model/post.js";
 const app = express();
 app.use(express.json());
 const port = 5000;
+const clients = [];
 
 app.use(cors({
     origin: '*' // Allow requests from this origin
@@ -28,6 +30,37 @@ app.use(cors({
     console.log(error)
     console.log("Invalid DB Connection")
 })
+
+
+const server = net.createServer((socket) => {
+    console.log('New client connected');
+    clients.push(socket);
+
+    // Handle incoming data from client
+    socket.on('data', (data) => {
+        console.log('Received:', data.toString());
+
+        // Broadcast data to all other clients
+        clients.forEach((client) => {
+            if (client !== socket) { // Avoid sending data back to sender
+                client.write(data);
+            }
+        });
+    });
+
+    socket.on('end', () => {
+        console.log('Client disconnected');
+        clients.splice(clients.indexOf(socket), 1);
+    });
+});
+
+// Start the server on port 65432
+server.listen(65432, '0.0.0.0', () => {
+    console.log('Server is listening on port 65432');
+});
+
+
+
 
 app.post('/api/similarity_query_api', async (req,res)=>{
     // const {file,embeddings} = req.body
@@ -66,16 +99,16 @@ app.post('/api/similarity_query_api', async (req,res)=>{
         console.log("SCORE_____________",score);
         if(score>0.7){
             const obj = {
-                "file":req.body.file,
-                "embeddings":req.body.embedding,
+                // "file":req.body.file,
+                // "embeddings":req.body.embedding,
                 "isMatched":true
             }
             return res.status(200).send(obj);
         }
         else{
             const obj = {
-                "file":req.body.file,
-                "embeddings":req.body.embedding,
+                // "file":req.body.file,
+                // "embeddings":req.body.embedding,
                 "isMatched":false
             }
             return res.status(200).send(obj)
@@ -101,7 +134,7 @@ app.post('/api/upload_to_unMatched',async (req,res)=>{
         return res.status(400).json(error);
     }
 })
-app.post('/api/upload_to_Matched_if_recognised',async (req,res)=>{
+app.post('/api/upload_to_Matched',async (req,res)=>{
     try{
         const {file,embeddings} = req.body;
         const obj ={

@@ -10,9 +10,26 @@ import csv
 import requests
 import base64
 import json
+import socket
+import threading
+import pytesseract
 
 # Create a directory to store detected faces
 os.makedirs("detected_faces", exist_ok=True)
+
+
+def receive_messages(sock):
+    while True:
+        try:
+            data = sock.recv(1024)
+            if data:
+                print("Broadcast received:", data.decode())
+            else:
+                break
+        except Exception as e:
+            print("Error:", e)
+            break
+
 
 # Step 1: Retrieve the YouTube video stream URL
 def get_youtube_video_url(youtube_url):
@@ -32,7 +49,6 @@ def load_yolo_model():
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
     return net, output_layers
-
 
 # Detect people in the frame
 def detect_people_in_frame(frame, net, output_layers):
@@ -71,6 +87,25 @@ def detect_people_in_frame(frame, net, output_layers):
 
     return headcount
 
+
+def extract_timestamp_from_image(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Use OCR to extract text from the grayscale image
+    text = pytesseract.image_to_string(gray)
+
+    # Process the text to find the timestamp
+    # Assuming the timestamp is in the format 'Fri 08-11-2024 12:24:00 AM'
+    lines = text.split('\n')
+    timestamp = None
+    for line in lines:
+        if any(char.isdigit() for char in line):
+            timestamp = line.strip()
+            break
+    
+    return timestamp
+
 # Step 3: Capture frames and detect faces
 def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_layers, interval=3):
     cap = cv2.VideoCapture(stream_url)
@@ -87,26 +122,28 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
     frame_count = 0
     capture_count = 0
 
-    with open('headcount_data.csv', mode='w+', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['FrameNumber', 'Headcount'])
+    # with open('headcount_data.csv', mode='w+', newline='') as file:
+    #     writer = csv.writer(file)
+    #     writer.writerow(['FrameNumber', 'Headcount'])
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-            if frame_count % frame_interval == 0:
-                capture_count += 1
-                frame_with_faces = detect_faces_in_frame(frame, mtcnn, face_model, capture_count)
-                headcount = detect_people_in_frame(frame, yolo_net, output_layers)
+        if frame_count % frame_interval == 0:
+            capture_count += 1
+            frame_with_faces = detect_faces_in_frame(frame, mtcnn, face_model, capture_count)
+            headcount = detect_people_in_frame(frame, yolo_net, output_layers)
+            timestamp= extract_timestamp_from_image(frame)
+            data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
+            client_socket.sendall(data)
+            # writer.writerow([capture_count, headcount])
+            # file.flush()
+            print(f'Processed and saved detected faces for frame {capture_count}.')
 
-                writer.writerow([capture_count, headcount])
-                file.flush()
-                print(f'Processed and saved detected faces for frame {capture_count}.')
-
-            frame_count += 1
-            time.sleep(1 / frame_rate)
+        frame_count += 1
+        time.sleep(1 / frame_rate)
 
     cap.release()
     cv2.destroyAllWindows()
@@ -125,6 +162,7 @@ def image_to_base64(image):
 def similarity_query_api(img_base_64,embedding):
     url = "http://localhost:5000/api/similarity_query_api"
     headers = {'Content-Type':'application/json'}
+    # print("file = ",img_base_64," embeddings =  ",embedding)
     data = {"file": img_base_64,"embedding":embedding}
     response = requests.post(url,headers=headers,json=data)
     return response.json()
@@ -149,7 +187,7 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             try:
                 cv2.imwrite(face_filename, face)
             except Exception as e:
-                continue
+                continue;
             
             print(f"Saved detected face to {face_filename}")
 
@@ -157,7 +195,7 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             face_rgb = cv2.resize(face, (160, 160))
             face_tensor = torch.from_numpy(face_rgb).permute(2, 0, 1).float().unsqueeze(0)
             face_embedding = face_model(face_tensor)
-            print(face_filename," embedding = ",face_embedding[0].tolist())
+            # print(face_filename," embedding = ",face_embedding[0].tolist())
             embedding = face_embedding[0].tolist()
             img_base_64 = image_to_base64(face)
             similarity_result = similarity_query_api(img_base_64,embedding)
@@ -174,20 +212,23 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
 
 
             # Save the embedding as a .npy file
+            
             # embedding_filename = f"detected_faces/frame_{frame_index}_face_{i + 1}_embedding.npy"
             # np.save(embedding_filename, face_embedding.detach().numpy())
             # print(f"Saved embedding to {embedding_filename}")
 
-
-            # call query
-            # push into collection wala api
-            
             cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
     return frame
 
 # Execution
-youtube_url = 'https://www.youtube.com/watch?v=dN64IzvC8FI'
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('127.0.0.1', 65432))
+
+thread = threading.Thread(target=receive_messages, args=(client_socket,))
+thread.start()
+youtube_url = 'https://www.youtube.com/watch?v=vAZcPhMACeo'
 stream_url = get_youtube_video_url(youtube_url)
 print("Stream URL:", stream_url)
 
