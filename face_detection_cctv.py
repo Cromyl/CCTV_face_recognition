@@ -12,7 +12,6 @@ import base64
 import json
 import socket
 import threading
-import pytesseract
 
 # Create a directory to store detected faces
 os.makedirs("detected_faces", exist_ok=True)
@@ -88,23 +87,23 @@ def detect_people_in_frame(frame, net, output_layers):
     return headcount
 
 
-def extract_timestamp_from_image(image):
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# def extract_timestamp_from_image(image):
+#     # Convert the image to grayscale
+#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
-    # Use OCR to extract text from the grayscale image
-    text = pytesseract.image_to_string(gray)
+#     # Use OCR to extract text from the grayscale image
+#     text = pytesseract.image_to_string(gray)
 
-    # Process the text to find the timestamp
-    # Assuming the timestamp is in the format 'Fri 08-11-2024 12:24:00 AM'
-    lines = text.split('\n')
-    timestamp = None
-    for line in lines:
-        if any(char.isdigit() for char in line):
-            timestamp = line.strip()
-            break
+#     # Process the text to find the timestamp
+#     # Assuming the timestamp is in the format 'Fri 08-11-2024 12:24:00 AM'
+#     lines = text.split('\n')
+#     timestamp = None
+#     for line in lines:
+#         if any(char.isdigit() for char in line):
+#             timestamp = line.strip()
+#             break
     
-    return timestamp
+#     return timestamp
 
 # Step 3: Capture frames and detect faces
 def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_layers, interval=3):
@@ -135,8 +134,9 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
             capture_count += 1
             frame_with_faces = detect_faces_in_frame(frame, mtcnn, face_model, capture_count)
             headcount = detect_people_in_frame(frame, yolo_net, output_layers)
-            timestamp= extract_timestamp_from_image(frame)
-            data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
+            # timestamp= extract_timestamp_from_image(frame)
+            # data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
+            data = json.dumps([capture_count, headcount]).encode('utf-8')
             client_socket.sendall(data)
             # writer.writerow([capture_count, headcount])
             # file.flush()
