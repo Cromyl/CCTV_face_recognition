@@ -1,13 +1,33 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import axios from 'axios';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const CrowdDensity = () => {
     const [dataPoints, setDataPoints] = useState({ x: [], y: [] });
     const [ws, setWs] = useState(null);
-    const chartRef = useRef(null); // Create a ref to target the chart element
+    const chartRef = useRef(null);
+
+    const fetchInitialData = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/fetchChartData'); // Replace with your API endpoint
+            const initialData = response.data;
+
+            // Assuming each entry in the response has `frame_no` and `count`
+            const xValues = initialData.map(entry => entry.frame_no);
+            const yValues = initialData.map(entry => entry.count);
+
+            setDataPoints({ x: xValues, y: yValues });
+        } catch (error) {
+            console.error("Error fetching initial data:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchInitialData();
+    }, []);
 
     const data = {
         labels: dataPoints.x,
@@ -25,6 +45,7 @@ const CrowdDensity = () => {
     
     const options = {
         responsive: true,
+        maintainAspectRatio: false, // Allows the chart to adjust its aspect ratio
         plugins: {
             legend: {
                 display: true,
@@ -37,18 +58,17 @@ const CrowdDensity = () => {
                 position: 'bottom',
                 title: {
                     display: true,
-                    text: 'Frame',  // Label for the x-axis
+                    text: 'Frame',
                 },
             },
             y: {
                 title: {
                     display: true,
-                    text: 'Number of People',  // Label for the y-axis
+                    text: 'Number of People',
                 },
             },
         },
     };
-    
 
     const addDataPoint = (x, y) => {
         setDataPoints((prevData) => ({
@@ -58,13 +78,13 @@ const CrowdDensity = () => {
     };
 
     const downloadChartAsImage = () => {
-        const chart = chartRef.current?.chart; // Access the chart instance directly from the ref
+        const chart = chartRef.current?.chart;
         if (chart) {
-            const imageUrl = chart.toBase64Image(); // Get the chart as a base64 image
-            const a = document.createElement('a'); // Create a temporary anchor element
+            const imageUrl = chart.toBase64Image();
+            const a = document.createElement('a');
             a.href = imageUrl;
-            a.download = 'crowd_density_chart.jpg'; // Set the file name
-            a.click(); // Trigger the download
+            a.download = 'crowd_density_chart.jpg';
+            a.click();
         } else {
             console.error('Chart instance not found');
         }
@@ -78,7 +98,7 @@ const CrowdDensity = () => {
         };
 
         ws.onmessage = async (event) => {
-            const textData = await event.data.text(); // Convert Blob to text
+            const textData = await event.data.text();
             const numbers = textData.slice(1, -1).split(',').map(Number);
 
             const num1 = numbers[0];
@@ -108,8 +128,7 @@ const CrowdDensity = () => {
     }, []);
 
     return (
-        <div>
-            {/* <h2>Crowd Density Data</h2> */}
+        <div style={{ width: '100%', maxWidth: '800px', height: '400px', margin: '0 auto' }}>
             <Line ref={chartRef} data={data} options={options} />
             {/* <button onClick={downloadChartAsImage}>Download Graph as JPG</button> */}
         </div>

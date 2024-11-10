@@ -116,23 +116,7 @@ def detect_people_in_frame(frame, net, output_layers):
     return headcount
 
 
-# def extract_timestamp_from_image(image):
-#     # Convert the image to grayscale
-#     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-#     # Use OCR to extract text from the grayscale image
-#     text = pytesseract.image_to_string(gray)
 
-#     # Process the text to find the timestamp
-#     # Assuming the timestamp is in the format 'Fri 08-11-2024 12:24:00 AM'
-#     lines = text.split('\n')
-#     timestamp = None
-#     for line in lines:
-#         if any(char.isdigit() for char in line):
-#             timestamp = line.strip()
-#             break
-    
-#     return timestamp
 
 # Step 3: Capture frames and detect faces
 def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_layers, interval=3):
@@ -150,9 +134,7 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
     frame_count = 0
     capture_count = 0
 
-    # with open('headcount_data.csv', mode='w+', newline='') as file:
-    #     writer = csv.writer(file)
-    #     writer.writerow(['FrameNumber', 'Headcount'])
+
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -167,6 +149,7 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
             # data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
             data = json.dumps([capture_count, headcount]).encode('utf-8')
             write(data)
+            upload_people_count_api(capture_count,headcount)
             # writer.writerow([capture_count, headcount])
             # file.flush()
             print(f'Processed and saved detected faces for frame {capture_count}.')
@@ -187,6 +170,13 @@ def image_to_base64(image):
     _, buffer = cv2.imencode('.jpg', image)
     image_base64 = base64.b64encode(buffer).decode('utf-8')
     return image_base64
+
+def upload_people_count_api(frame_no,count):
+    url="http://localhost:5000/api/uploadChartData"
+    headers = {'Content-Type':'application/json'}
+    data={"frame_no":frame_no,"count":count}
+    response=requests.post(url,headers=headers,json=data)
+    return response.json()
 
 def similarity_query_api(img_base_64,embedding):
     url = "http://localhost:5000/api/similarity_query_api"
@@ -262,7 +252,8 @@ def write(message):
     message_queue.put(message)
 
 # Execution
-
+response = requests.delete("http://localhost:5000/api/deleteChartData")
+print(response)
 # client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # client_socket.connect(('127.0.0.1', 65432))
 # asyncio.run(connect_to_server())

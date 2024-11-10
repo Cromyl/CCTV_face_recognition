@@ -6,7 +6,7 @@ import cors from "cors";
 // import { WebSocket } from "ws";
 import WebSocket, {WebSocketServer} from 'ws';
 
-import { model1 as Matched, model2 as unMatched } from "./model/post.js";
+import { model1 as Matched, model2 as unMatched, chartModel as lineGraph, chartModel } from "./model/post.js";
 // import fs from "fs";
 // import multer from "multer";
 // const upload = multer({ dest: 'uploads/' });
@@ -56,49 +56,18 @@ wss.on('connection', (ws) => {
         clients.splice(clients.indexOf(ws), 1);
     });
 });
-// const server = net.createServer((socket) => {
-//     console.log('New client connected');
-//     clients.push(socket);
 
-//     // Handle incoming data from client
-//     socket.on('data', (data) => {
-//         console.log('Received:', data.toString());
-
-//         // Broadcast data to all other clients
-//         clients.forEach((client) => {
-//             if (client !== socket) { // Avoid sending data back to sender
-//                 client.write(data);
-//             }
-//         });
-//     });
-
-//     socket.on('end', () => {
-//         console.log('Client disconnected');
-//         clients.splice(clients.indexOf(socket), 1);
-//     });
-// });
-
-// // Start the server on port 65432
-// server.listen(65432, '0.0.0.0', () => {
-//     console.log('Server is listening on port 65432');
-// });
 
 
 
 
 app.post('/api/similarity_query_api', async (req,res)=>{
-    // const {file,embeddings} = req.body
-
-    // console.log("******************************************************************embedding*************************");
-    // // console.log(req.body)
-    // console.log(req.body.embedding)
-    // console.log(embeddings);
 
     try{
         const agg = [
             {
               '$vectorSearch': {
-                'index': 'vector_index',
+                'index': 'default',
                 'path': 'embeddings',
                 'queryVector': req.body.embedding,
                 'numCandidates': 150,
@@ -125,7 +94,8 @@ app.post('/api/similarity_query_api', async (req,res)=>{
             const obj = {
                 // "file":req.body.file,
                 // "embeddings":req.body.embedding,
-                "isMatched":true
+                "isMatched":true,
+                "score":score
             }
             return res.status(200).send(obj);
         }
@@ -133,7 +103,8 @@ app.post('/api/similarity_query_api', async (req,res)=>{
             const obj = {
                 // "file":req.body.file,
                 // "embeddings":req.body.embedding,
-                "isMatched":false
+                "isMatched":false,
+                "score":score
             }
             return res.status(200).send(obj)
         }
@@ -176,31 +147,72 @@ app.post('/api/upload_to_Matched',async (req,res)=>{
         return res.status(400).json(error);
     }
 })
-app.get('/api/fetch_all_unMatched',async (req,res)=>{
+
+
+app.get('/api/fetch_all_unMatched', async (req, res) => {
     try {
-        const doc = await unMatched.find({});
-        // console.log(doc);
-        return res.status(200).json(doc);
+        const limit = 100;  // Limit the number of entries fetched to 100
+        const page = parseInt(req.query.page) || 1;  // Default to page 1 if not specified
+        const skip = (page - 1) * limit;  // Calculate offset based on page number
+
+        const docs = await unMatched.find({}).sort({_id:-1}).skip(skip).limit(limit);
+
+        // Optional: Get the total count of documents for pagination metadata
+        const totalDocs = await unMatched.countDocuments();
+        const totalPages = Math.ceil(totalDocs / limit);
+
+        return res.status(200).json({
+            data: docs,
+            currentPage: page,
+            totalPages: totalPages,
+            totalEntries: totalDocs
+        });
     } catch (error) {
         console.error("Error fetching unmatched documents:", error);
         return res.status(500).json({ message: "An error occurred while retrieving data." });
     }
 });
-// app.post('/api/upload', async (req, res) => {
-//     try {
-//         //console.log(req.body)
-//         const { file, embeddings } = req.body;
-//         //console.log("file",file," embeddings ",embeddings);
-//         //if(file===undefined) return res.status(400).send("file undefined");
-//         const obj = {
-//             file: file,
-//             embeddings: embeddings
-//         }
-//         const data = await Matched.create(obj);
-//         data.save();
-//         res.status(200).json({ message: "New data uploaded !!" })
-//     } catch (error) {
-//         return res.status(400).json(error);
-//     }
-// })
 
+
+
+
+app.post('/api/uploadChartData',async (req,res)=>{
+    try{
+        // const {file,embeddings} = req.body;
+        const obj ={
+            "frame_no": req.body.frame_no,
+            "count":req.body.count
+        }
+        // console.log(req.body.embedding)
+        // const deleted = await unMatched.findOneAndDelete(obj);
+        const data = await chartModel.create(obj);
+        await data.save();
+        // res.status(200).json({ message: "New data uploaded to matched collection!!" })
+        return res.status(200).json("uploaded")
+    }
+    catch(error){
+        return res.status(400).json(error);
+    }
+    
+})
+app.get('/api/fetchChartData',async (req,res)=>{
+    try {
+        const doc = await chartModel.find({});
+        // console.log(doc);
+        return res.status(200).json(doc);
+    } catch (error) {
+        // console.error("Error fetching unmatched documents:", error);
+        return res.status(500).json({ message: "An error occurred while retrieving data." });
+    }
+});
+
+
+app.delete('/api/deleteChartData', async (req, res) => {
+    try {
+        await chartModel.deleteMany({});  // Deletes all documents in the collection
+        return res.status(200).json({ message: "All data from chartModel deleted successfully!" });
+    } catch (error) {
+        console.error("Error deleting data from chartModel:", error);
+        return res.status(500).json({ message: "An error occurred while deleting data." });
+    }
+});

@@ -1,39 +1,62 @@
 import React, { useEffect, useState } from 'react';
-import Card from './card';  
+import Card from './card';
 
 const URL = `http://localhost:5000/api/fetch_all_unMatched`;
 
 function Unmatched() {
   const [temp, setTemp] = useState([]);
-  const [embeddings, setEmbeddings] = useState([]); 
+  const [embeddings, setEmbeddings] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1); // Track current page
+  const [totalPages, setTotalPages] = useState(1); // Track total pages
+  const [loading, setLoading] = useState(false); // Track loading state
+
+  // Fetch data function with pagination support
+  const fetchData = async (page) => {
+    if (loading || page > totalPages) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${URL}?page=${page}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const result = await response.json();
+      const fileNames = result.data.map(item => item.file);
+      const embeddingValues = result.data.map(item => item.embeddings);
+
+      // Append new data to the existing data
+      setTemp((prevTemp) => [...prevTemp, ...fileNames]);
+      setEmbeddings((prevEmbeddings) => [...prevEmbeddings, ...embeddingValues]);
+      setTotalPages(result.totalPages); // Update total pages from API response
+      setCurrentPage(page); // Update current page
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(URL);
+    fetchData(1);
+  }, []);
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-
-        const result = await response.json();
-        
-        const fileNames = result.map(item => item.file);  
-        const embeddingValues = result.map(item => item.embeddings);  
-
-        setTemp(fileNames);
-        setEmbeddings(embeddingValues);
-        // console.log(result);  
-        // console.log("EMEDINGVVVVVVVVVVVVVVVVVVVVVVVVVVVV")
-        // console.log(embeddingValues);
-        console.log(embeddings[0]);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50 &&
+        !loading &&
+        currentPage < totalPages
+      ) {
+        fetchData(currentPage + 1);
       }
     };
 
-    fetchData();
-  }, []);
-
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentPage, totalPages, loading]);
 
   const handleRemoveCard = (index) => {
     const updatedFiles = temp.filter((_, i) => i !== index);
@@ -43,25 +66,22 @@ function Unmatched() {
     setEmbeddings(updatedEmbeddings);
   };
 
-//   return (
-//     <div>
-//       <h1>Unmatched Faces</h1>
-//       <ul>
-//         {Array.isArray(temp) && Array.isArray(embeddings) && temp.length > 0 && embeddings.length > 0 ? (
-//           temp.map((fileName, index) => (
-//             <li key={index}>
-//               <Card fileName={fileName} embeddings={embeddings[index]} onRemove={() => handleRemoveCard(index)} />
-//             </li>
-//           ))
-//         ) : (
-//           <p>No unmatched faces found</p>
-//         )}
-//       </ul>
-//     </div>
-//   );
-return (
+  // Refetch latest data
+  const handleRefetch = () => {
+    setTemp([]);
+    setEmbeddings([]);
+    setCurrentPage(1);
+    fetchData(1); // Fetch from the first page again
+  };
+
+  return (
     <div className="container mt-4">
       <h1 className="text-center mb-4">Unmatched Faces</h1>
+      <div className="text-center mb-3">
+        <button className="btn btn-primary" onClick={handleRefetch} disabled={loading}>
+          Refetch New Entries
+        </button>
+      </div>
       <div className="row">
         {Array.isArray(temp) && temp.length > 0 ? (
           temp.map((fileName, index) => (
@@ -77,6 +97,7 @@ return (
           <p className="text-center">No unmatched faces found</p>
         )}
       </div>
+      {loading && <p className="text-center">Loading...</p>}
     </div>
   );
 }
