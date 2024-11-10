@@ -12,9 +12,38 @@ import base64
 import json
 import socket
 import threading
+import websockets
+import asyncio
+from queue import Queue
+import re
+
+message_queue = Queue()
 
 # Create a directory to store detected faces
 os.makedirs("detected_faces", exist_ok=True)
+
+async def connect_to_server():
+    uri = "ws://localhost:65432"
+    async with websockets.connect(uri) as websocket:
+        print("Connected to the WebSocket server")
+
+        # Start listening for messages from the server in a separate task
+        # asyncio.create_task(listen_for_messages(websocket))
+
+        # Continuously check for messages to send
+        await handle_outgoing_messages(websocket)
+
+
+async def handle_outgoing_messages(websocket):
+    while True:
+        if not message_queue.empty():
+            # Retrieve the next message from the queue and send it
+            message = message_queue.get()
+            await websocket.send(message)
+            # print(f"Sent: {message}")
+        
+        # Sleep briefly to prevent busy-waiting
+        await asyncio.sleep(0.1)
 
 
 def receive_messages(sock):
@@ -137,7 +166,7 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
             # timestamp= extract_timestamp_from_image(frame)
             # data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
             data = json.dumps([capture_count, headcount]).encode('utf-8')
-            client_socket.sendall(data)
+            write(data)
             # writer.writerow([capture_count, headcount])
             # file.flush()
             print(f'Processed and saved detected faces for frame {capture_count}.')
@@ -183,6 +212,9 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
         for i, box in enumerate(boxes):
             startX, startY, endX, endY = box.astype(int)
             face = frame[startY:endY, startX:endX]
+            size=((startX-endX)*(startY-endY))
+            if(size<1000):
+                continue
             face_filename = f"detected_faces/frame_{frame_index}_face_{i + 1}.jpg"
             try:
                 cv2.imwrite(face_filename, face)
@@ -221,16 +253,32 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
 
     return frame
 
+
+def start_websocket_client():
+    # Run the event loop for the WebSocket client in this thread
+    asyncio.run(connect_to_server())
+
+def write(message):
+    message_queue.put(message)
+
 # Execution
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect(('127.0.0.1', 65432))
+# client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# client_socket.connect(('127.0.0.1', 65432))
+# asyncio.run(connect_to_server())
+# asyncio.create_task(connect_to_server())
+websocket_thread = threading.Thread(target=start_websocket_client)
+websocket_thread.start()
 
-thread = threading.Thread(target=receive_messages, args=(client_socket,))
-thread.start()
+# thread = threading.Thread(target=receive_messages, args=(client_socket,))
+# thread.start()
 youtube_url = 'https://www.youtube.com/watch?v=vAZcPhMACeo'
+# youtube_url='https://www.youtube.com/watch?v=tcUSoJMU2AQ'
+# youtube_url="https://www.youtube.com/watch?v=9LyZGu_Lrg8"
 stream_url = get_youtube_video_url(youtube_url)
 print("Stream URL:", stream_url)
+match = re.search(r'[?&]t=(\d+)s?', youtube_url)
+print("Time = ",match)
 
 # Load models
 mtcnn, face_model = load_face_detection_model()

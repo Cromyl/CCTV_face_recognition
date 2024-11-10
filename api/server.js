@@ -3,6 +3,9 @@ import connect from "./database/conn.js";
 import net from 'net';
 // import Post from "./model/post.js";
 import cors from "cors";
+// import { WebSocket } from "ws";
+import WebSocket, {WebSocketServer} from 'ws';
+
 import { model1 as Matched, model2 as unMatched } from "./model/post.js";
 // import fs from "fs";
 // import multer from "multer";
@@ -31,33 +34,54 @@ app.use(cors({
     console.log("Invalid DB Connection")
 })
 
+const wss = new WebSocketServer({ port: 65432 });
 
-const server = net.createServer((socket) => {
+wss.on('connection', (ws) => {
     console.log('New client connected');
-    clients.push(socket);
+    clients.push(ws);
 
-    // Handle incoming data from client
-    socket.on('data', (data) => {
+    ws.on('message', (data) => {
         console.log('Received:', data.toString());
 
         // Broadcast data to all other clients
         clients.forEach((client) => {
-            if (client !== socket) { // Avoid sending data back to sender
-                client.write(data);
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(data);
             }
         });
     });
 
-    socket.on('end', () => {
+    ws.on('close', () => {
         console.log('Client disconnected');
-        clients.splice(clients.indexOf(socket), 1);
+        clients.splice(clients.indexOf(ws), 1);
     });
 });
+// const server = net.createServer((socket) => {
+//     console.log('New client connected');
+//     clients.push(socket);
 
-// Start the server on port 65432
-server.listen(65432, '0.0.0.0', () => {
-    console.log('Server is listening on port 65432');
-});
+//     // Handle incoming data from client
+//     socket.on('data', (data) => {
+//         console.log('Received:', data.toString());
+
+//         // Broadcast data to all other clients
+//         clients.forEach((client) => {
+//             if (client !== socket) { // Avoid sending data back to sender
+//                 client.write(data);
+//             }
+//         });
+//     });
+
+//     socket.on('end', () => {
+//         console.log('Client disconnected');
+//         clients.splice(clients.indexOf(socket), 1);
+//     });
+// });
+
+// // Start the server on port 65432
+// server.listen(65432, '0.0.0.0', () => {
+//     console.log('Server is listening on port 65432');
+// });
 
 
 

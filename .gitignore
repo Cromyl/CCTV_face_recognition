@@ -3,3 +3,4 @@ headcount_data.csv
 /api/node_modules
 yolov3.cfg
 yolov3.weights
+/frontend/node_modules
