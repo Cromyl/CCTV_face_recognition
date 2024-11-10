@@ -1,14 +1,21 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
 import CrowdDensity from './components/crowdDensity';
+import Unmatched from './components/Fetch_from_unmatched';
+import Navbar from './components/navbar';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import CurrentUTC from './components/CurrentTime';
 
 function App() {
   return (
-    <>
-    <CurrentUTC/>
-    <CrowdDensity/>
-    </>
+    <div className="app-container">
+      <Navbar />
+      <CurrentUTC/>
+      <CrowdDensity/>
+      <div className="mt-4">
+        <Unmatched />
+      </div>
+    </div>
   );
 }
 
