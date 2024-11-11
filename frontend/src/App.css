@@ -36,3 +36,63 @@
     transform: rotate(360deg);
   }
 }
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  margin-left: 350px;
+}
+
+.side-panel {
+  width: 350px;
+  height: 200vh;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  padding-top: 300px; /* Adjusted for Navbar height */
+  color: #fff;
+  background-color: #212529;
+  overflow-y: auto;
+}
+
+.side-panel ul {
+  padding: 0;
+  margin:0;
+  list-style-type: none;
+}
+
+.side-panel li {
+  margin-bottom: 10px;
+}
+.side-panel h5 {
+  color: white;
+}
+.side-panel a {
+  color: white;
+  font-weight: bold;
+  display: block;
+  padding: 5px 0;
+  font-size: large;
+}
+.side-panel ul li a {
+  color: #ffffff;
+  text-decoration: none;
+  padding: 8px 12px;
+  display: block;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.side-panel a:hover {
+  color:white;
+  text-decoration: underline;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding-top: 80px; /* Space for Navbar height */
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  background-color: #ffffff;
+  overflow-y: auto;
+}

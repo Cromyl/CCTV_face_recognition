@@ -1,0 +1,30 @@
+/* Navbar.css */
+
+/* Increase the size and boldness of the text */
+
+.header.navbar {
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  header.navbar .navbar-brand.custom-brand {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  header.custom-navbar .nav-link .time{
+    font-size: 2 rem; /* Larger text for nav links */
+    font-weight: bold; /* Make it bold */
+    color: #f8f9fa !important; /* White text */
+    transition: color 0.3s ease;
+  }
+  
+  /* Add hover effect */
+  header.custom-navbar .nav-link:hover {
+    color: #ffc107 !important; /* Change color on hover */
+  }
+  
+  /* Additional padding for better spacing */
+  header.custom-navbar {
+    padding: 1rem 1rem;
+  }
+  
