@@ -3,6 +3,11 @@ import React, { useState, useEffect } from 'react';
 function CurrentUTC() {
     const [utcTime, setUtcTime] = useState(new Date().toISOString());
 
+    const formatTime = (date) => {
+        const dateString = date.toISOString();
+        return dateString;
+      };
+
     useEffect(() => {
         const interval = setInterval(() => {
             setUtcTime(new Date().toISOString());
@@ -14,9 +19,20 @@ function CurrentUTC() {
     return (
         <div>
             {/* <h3>Current UTC Time:</h3> */}
-            <p>{utcTime}</p>
+            <div style={styles.time}>{formatTime(utcTime)}</div>
         </div>
     );
+
+    
 }
+
+const styles = {
+    
+    time: {
+      color: '#fff',
+      fontSize: '18px',
+    },
+    
+  };
 
 export default CurrentUTC;

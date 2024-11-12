@@ -7,19 +7,20 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const CrowdDensity = () => {
     const [dataPoints, setDataPoints] = useState({ x: [], y: [] });
+    const [movingAverage, setMovingAverage] = useState([]);
     const [ws, setWs] = useState(null);
     const chartRef = useRef(null);
 
     const fetchInitialData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/fetchChartData'); // Replace with your API endpoint
+            const response = await axios.get('http://localhost:5000/api/fetchChartData');
             const initialData = response.data;
 
-            // Assuming each entry in the response has `frame_no` and `count`
             const xValues = initialData.map(entry => entry.frame_no);
             const yValues = initialData.map(entry => entry.count);
 
             setDataPoints({ x: xValues, y: yValues });
+            calculateMovingAverage(yValues);
         } catch (error) {
             console.error("Error fetching initial data:", error);
         }
@@ -28,6 +29,25 @@ const CrowdDensity = () => {
     useEffect(() => {
         fetchInitialData();
     }, []);
+
+    const calculateMovingAverage = (yValues) => {
+        const avgData = yValues.map((_, i, arr) => {
+            const start = Math.max(0, i - 39);
+            const subset = arr.slice(start, i + 1);
+            const sum = subset.reduce((acc, val) => acc + val, 0);
+            return sum / subset.length;
+        });
+        setMovingAverage(avgData);
+    };
+
+    const addDataPoint = (x, y) => {
+        setDataPoints((prevData) => {
+            const newX = [...prevData.x, x];
+            const newY = [...prevData.y, y];
+            calculateMovingAverage(newY);
+            return { x: newX, y: newY };
+        });
+    };
 
     const data = {
         labels: dataPoints.x,
@@ -42,10 +62,24 @@ const CrowdDensity = () => {
             },
         ],
     };
-    
+
+    const movingAverageData = {
+        labels: dataPoints.x,
+        datasets: [
+            {
+                label: '40-frame Moving Average',
+                data: movingAverage,
+                borderColor: 'rgba(255,99,132,1)',
+                backgroundColor: 'rgba(255,99,132,0.2)',
+                fill: false,
+                tension: 0.1,
+            },
+        ],
+    };
+
     const options = {
         responsive: true,
-        maintainAspectRatio: false, // Allows the chart to adjust its aspect ratio
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: true,
@@ -68,13 +102,6 @@ const CrowdDensity = () => {
                 },
             },
         },
-    };
-
-    const addDataPoint = (x, y) => {
-        setDataPoints((prevData) => ({
-            x: [...prevData.x, x],
-            y: [...prevData.y, y],
-        }));
     };
 
     const downloadChartAsImage = () => {
@@ -128,9 +155,15 @@ const CrowdDensity = () => {
     }, []);
 
     return (
-        <div style={{ width: '100%', maxWidth: '800px', height: '400px', margin: '0 auto' }}>
-            <Line ref={chartRef} data={data} options={options} />
-            {/* <button onClick={downloadChartAsImage}>Download Graph as JPG</button> */}
+        <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+            <h2>Crowd Density</h2>
+            <div style={{ height: '400px' }}>
+                <Line ref={chartRef} data={data} options={options} />
+            </div>
+            <h2>Rolling Average (Last 40 Frames)</h2>
+            <div style={{ height: '400px', marginTop: '20px' }}>
+                <Line data={movingAverageData} options={options} />
+            </div>
         </div>
     );
 };
