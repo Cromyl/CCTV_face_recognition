@@ -32,21 +32,7 @@ function Card({ fileName, embeddings ,onRemove}) {
       alert('Failed to upload data');
     }
   };
-
-//   return (
-//     <div className="card">
-//       <h3>Unidentified Face Image</h3>
-//       <img
-//         src={base64ToImageSrc(fileName)}
-//         alt="Unmatched Face"
-//         style={{ width: '200px', height: '200px', objectFit: 'cover' }}
-//       />
-//       <div>
-//         <button onClick={handleAccept}>Accept this person</button>
-//         <button onClick={onRemove}>Decline</button>
-//       </div>
-//     </div>
-//   );
+  
 return (
     <div className="card shadow-sm">
       <div className="card-body">

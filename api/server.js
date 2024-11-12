@@ -7,9 +7,6 @@ import cors from "cors";
 import WebSocket, {WebSocketServer} from 'ws';
 
 import { model1 as Matched, model2 as unMatched, chartModel as lineGraph, chartModel } from "./model/post.js";
-// import fs from "fs";
-// import multer from "multer";
-// const upload = multer({ dest: 'uploads/' });
 
 const app = express();
 app.use(express.json());
@@ -113,7 +110,7 @@ app.post('/api/similarity_query_api', async (req,res)=>{
         return res.status(400).json(err);
     }
 
-})
+});
 app.post('/api/upload_to_unMatched',async (req,res)=>{
     try{
         // const {file,embeddings} = req.body;
@@ -121,14 +118,20 @@ app.post('/api/upload_to_unMatched',async (req,res)=>{
             "file": req.body.file,
             "embeddings":req.body.embedding
         }
-        const data = await unMatched.create(obj);
-        await data.save();
-        res.status(200).json({ message: "New data uploaded to unmatched collection!!" })
+        const existingDoc = await unMatched.findOne(obj);
+        if (existingDoc) {
+            return res.status(200).json({ message: "Entry already exists in the unmatched collection!" });
+        }
+        else{
+            const data = await unMatched.create(obj);
+            // await data.save();
+            res.status(200).json({ message: "New data uploaded to unmatched collection!!" })
+        }
     }
     catch(error){
         return res.status(400).json(error);
     }
-})
+});
 app.post('/api/upload_to_Matched',async (req,res)=>{
     try{
         // const {file,embeddings} = req.body;
@@ -137,18 +140,36 @@ app.post('/api/upload_to_Matched',async (req,res)=>{
             "embeddings":req.body.embedding
         }
         // console.log("INSIDE UPLOAD TO MATCHED **********************************************")
-        console.log(req.body.embedding)
-        const deleted = await unMatched.findOneAndDelete(obj);
-        const data = await Matched.create(obj);
-        await data.save();
-        res.status(200).json({ message: "New data uploaded to matched collection!!" })
+        // console.log(req.body.embedding)
+        const existingDoc = await Matched.findOne(obj);
+        if (existingDoc) {
+            return res.status(200).json({ message: "Entry already exists in the matched collection!" });
+        }
+        else{
+            const deleted = await unMatched.findOneAndDelete(obj);
+            const data = await Matched.create(obj);
+            // await data.save();
+            res.status(200).json({ message: "New data uploaded to matched collection!!" })
+        }
     }
     catch(error){
         return res.status(400).json(error);
     }
-})
+});
 
-
+app.post('/api/delete_from_unmatched',async(req,res)=>{
+    try{
+        const obj={
+            "file":req.body.file,
+            "embeddings":req.body.embedding
+        }
+        const deleted = await unMatched.findOneAndDelete(obj);
+        res.status(200).json({message:"Data deleted from unmatched"})
+    }
+    catch(error){
+        console.log(error);
+    }
+});
 app.get('/api/fetch_all_unMatched', async (req, res) => {
     try {
         const limit = 100;  // Limit the number of entries fetched to 100
@@ -206,7 +227,6 @@ app.post('/api/delete_from_matched', async (req, res) => {
         
         // Use JSON.stringify for exact matching in case embedding is an array
         const result = await Matched.deleteMany(obj);
-
         if (result) {
             res.status(200).json({ message: 'Entry deleted successfully', deleted: result });
         } else {
