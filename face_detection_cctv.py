@@ -143,13 +143,13 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
 
         if frame_count % frame_interval == 0:
             capture_count += 1
-            frame_with_faces = detect_faces_in_frame(frame, mtcnn, face_model, capture_count)
+            known_headcount = detect_faces_in_frame(frame, mtcnn, face_model, capture_count)
             headcount = detect_people_in_frame(frame, yolo_net, output_layers)
             # timestamp= extract_timestamp_from_image(frame)
             # data = json.dumps([capture_count, headcount,timestamp]).encode('utf-8')
-            data = json.dumps([capture_count, headcount]).encode('utf-8')
+            data = json.dumps([capture_count, headcount,known_headcount]).encode('utf-8')
             write(data)
-            upload_people_count_api(capture_count,headcount)
+            upload_people_count_api(capture_count,headcount,known_headcount)
             # writer.writerow([capture_count, headcount])
             # file.flush()
             print(f'Processed and saved detected faces for frame {capture_count}.')
@@ -171,10 +171,10 @@ def image_to_base64(image):
     image_base64 = base64.b64encode(buffer).decode('utf-8')
     return image_base64
 
-def upload_people_count_api(frame_no,count):
+def upload_people_count_api(frame_no,count,known):
     url="http://localhost:5000/api/uploadChartData"
     headers = {'Content-Type':'application/json'}
-    data={"frame_no":frame_no,"count":count}
+    data={"frame_no":frame_no,"count":count,"known_headcount":known}
     response=requests.post(url,headers=headers,json=data)
     return response.json()
 
@@ -197,7 +197,7 @@ def upload_to_collection_api(img_base_64,face_embedding,collection_type):
 def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     boxes, _ = mtcnn.detect(frame_rgb)
-
+    count_known=0
     if boxes is not None:
         for i, box in enumerate(boxes):
             startX, startY, endX, endY = box.astype(int)
@@ -229,6 +229,8 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
                     print("Succesfully uploaded")
                 else:
                     print("Uploading failed")
+            else:
+                count_known+=1
         
 
 
@@ -241,7 +243,7 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
 
             cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
-    return frame
+    return count_known
 
 
 def start_websocket_client():

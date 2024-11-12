@@ -32,18 +32,25 @@ import Navbar from './components/navbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import CurrentUTC from './components/CurrentTime';
 import YouTubeEmbed from './components/LiveVideo';
+import LandingPage from './components/LandingPage';
+import SidePanel from './components/SidePanel';
 
 function App() {
   return (
+    <>
+    
     <BrowserRouter>
-    <Navbar />
+      <Navbar />
       <div className="app-container d-flex">
         {/* Side Panel */}
-        <div className="side-panel bg-dark p-4">
-          <h5 className="mb-4">Dashboard</h5>
+        {/* <div className="side-panel bg-dark p-4" style={{ maxWidth: '300px' }}>
+          <h5 className="mb-4">Features</h5>
           <ul className="list-unstyled">
             <li>
-              <Link to="/" className="text-decoration-none">Live Video</Link>
+              <Link to="/" className="text-decoration-none">Welcome!</Link>
+            </li>
+            <li>
+              <Link to="/video" className="text-decoration-none">Live Video</Link>
             </li>
             <li>
               <Link to="/crowddensity" className="text-decoration-none">Crowd Density</Link>
@@ -55,13 +62,15 @@ function App() {
               <Link to="/matched" className="text-decoration-none">Matched Faces</Link>
             </li>
           </ul>
-        </div>
+        </div> */}
+        <SidePanel/>
 
         {/* Main Content */}
         <div className="main-content flex-grow-1 p-4">
           {/* <CurrentUTC /> */}
           <Routes>
-            <Route path="/" element={<YouTubeEmbed url="https://www.youtube.com/watch?v=vAZcPhMACeo" />} />
+            <Route path="/" element={<LandingPage/>}/>
+            <Route path="/video" element={<YouTubeEmbed url="https://www.youtube.com/watch?v=vAZcPhMACeo" />} />
             <Route path="/crowddensity" element={<CrowdDensity />} />
             <Route path="/unmatched" element={<Unmatched />} />
             <Route path="/matched" element={<Matched />} />
@@ -69,6 +78,7 @@ function App() {
         </div>
       </div>
     </BrowserRouter>
+    </>
   );
 }
 
