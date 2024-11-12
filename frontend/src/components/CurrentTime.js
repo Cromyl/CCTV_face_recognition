@@ -4,8 +4,10 @@ function CurrentUTC() {
     const [utcTime, setUtcTime] = useState(new Date().toISOString());
 
     const formatTime = (date) => {
-        const dateString = date.toISOString();
-        return dateString;
+        const dateString = date.toString();
+        const date2 = dateString.substring(0, dateString.indexOf('T'));
+        const time = dateString.substring(dateString.indexOf('T')+1,dateString.indexOf('.'));
+        return "GMT : "+time+"  "+date2;
       };
 
     useEffect(() => {

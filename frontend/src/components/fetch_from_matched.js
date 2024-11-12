@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import CardMatched from './car_matched';
+import CardMatched from './card_matched';
 
 const URL = `http://localhost:5000/api/fetch_all_Matched`;
 

@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import axios from 'axios';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 const CrowdDensity = () => {
-    const [dataPoints, setDataPoints] = useState({ x: [], y: [] });
+    const [dataPoints, setDataPoints] = useState({ x: [], y: [], known: [] });
     const [movingAverage, setMovingAverage] = useState([]);
     const [ws, setWs] = useState(null);
     const chartRef = useRef(null);
@@ -18,8 +18,8 @@ const CrowdDensity = () => {
 
             const xValues = initialData.map(entry => entry.frame_no);
             const yValues = initialData.map(entry => entry.count);
-
-            setDataPoints({ x: xValues, y: yValues });
+            const knownHeadcount = initialData.map(entry => entry.known_headcount);
+            setDataPoints({ x: xValues, y: yValues, known: knownHeadcount });
             calculateMovingAverage(yValues);
         } catch (error) {
             console.error("Error fetching initial data:", error);
@@ -40,12 +40,13 @@ const CrowdDensity = () => {
         setMovingAverage(avgData);
     };
 
-    const addDataPoint = (x, y) => {
+    const addDataPoint = (x, y, known) => {
         setDataPoints((prevData) => {
             const newX = [...prevData.x, x];
             const newY = [...prevData.y, y];
+            const newKnown = [...prevData.known, known];
             calculateMovingAverage(newY);
-            return { x: newX, y: newY };
+            return { x: newX, y: newY, known: newKnown };
         });
     };
 
@@ -73,6 +74,26 @@ const CrowdDensity = () => {
                 backgroundColor: 'rgba(255,99,132,0.2)',
                 fill: false,
                 tension: 0.1,
+            },
+        ],
+    };
+
+    const knownUnknownData = {
+        labels: dataPoints.x,
+        datasets: [
+            {
+                label: 'Known Headcount',
+                data: dataPoints.known,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: 'Unknown Headcount',
+                data: dataPoints.y.map((y, index) => Math.max(0, y - dataPoints.known[index])),
+                backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 1,
             },
         ],
     };
@@ -130,8 +151,9 @@ const CrowdDensity = () => {
 
             const num1 = numbers[0];
             const num2 = numbers[1];
+            const knownHeadcount = numbers[2];
 
-            addDataPoint(num1, num2);
+            addDataPoint(num1, num2, knownHeadcount);
         };
 
         ws.onclose = (event) => {
@@ -163,6 +185,10 @@ const CrowdDensity = () => {
             <h2>Rolling Average (Last 40 Frames)</h2>
             <div style={{ height: '400px', marginTop: '20px' }}>
                 <Line data={movingAverageData} options={options} />
+            </div>
+            <h2>Known vs Unknown Headcount</h2>
+            <div style={{ height: '400px', marginTop: '20px' }}>
+                <Bar data={knownUnknownData} options={options} />
             </div>
         </div>
     );

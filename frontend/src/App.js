@@ -33,6 +33,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import CurrentUTC from './components/CurrentTime';
 import YouTubeEmbed from './components/LiveVideo';
 import LandingPage from './components/LandingPage';
+import SidePanel from './components/SidePanel';
 
 function App() {
   return (
@@ -42,7 +43,7 @@ function App() {
       <Navbar />
       <div className="app-container d-flex">
         {/* Side Panel */}
-        <div className="side-panel bg-dark p-4">
+        {/* <div className="side-panel bg-dark p-4" style={{ maxWidth: '300px' }}>
           <h5 className="mb-4">Features</h5>
           <ul className="list-unstyled">
             <li>
@@ -61,7 +62,8 @@ function App() {
               <Link to="/matched" className="text-decoration-none">Matched Faces</Link>
             </li>
           </ul>
-        </div>
+        </div> */}
+        <SidePanel/>
 
         {/* Main Content */}
         <div className="main-content flex-grow-1 p-4">

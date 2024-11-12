@@ -8,8 +8,9 @@ const  postSchema=mongoose.Schema({
 
 const chartSchema=mongoose.Schema({
     frame_no:Number,
-    count:Number
-},{ capped: { size: 524288, max: 200 } });
+    count:Number,
+    known_headcount:Number
+},{ capped: { size: 1524288, max: 250 } });
 
 export const model1=mongoose.model('Matched',postSchema)
 

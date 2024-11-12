@@ -50,9 +50,9 @@ return (
           <button className="btn btn-danger " onClick={handleAccept} style={{ marginRight: '5px' }}>
             Remove
           </button>
-          <button className="btn btn-success" onClick={onRemove}>
+          {/* <button className="btn btn-success" onClick={onRemove}>
           Keep
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

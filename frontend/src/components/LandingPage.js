@@ -84,7 +84,7 @@ const styles = {
     fontSize: '18px',
   },
   hero: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#e3e1e1',
     padding: '100px 20px',
   },
   heroTitle: {

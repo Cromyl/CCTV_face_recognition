@@ -221,9 +221,11 @@ app.post('/api/delete_from_matched', async (req, res) => {
 app.post('/api/uploadChartData',async (req,res)=>{
     try{
         // const {file,embeddings} = req.body;
+        // console.log("Known = "+req.body.known_headcount)
         const obj ={
             "frame_no": req.body.frame_no,
-            "count":req.body.count
+            "count":req.body.count,
+            "known_headcount":req.body.known_headcount
         }
         // console.log(req.body.embedding)
         // const deleted = await unMatched.findOneAndDelete(obj);
