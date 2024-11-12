@@ -27,6 +27,7 @@ import { BrowserRouter , Route, Routes, Link } from 'react-router-dom';
 import './App.css';
 import CrowdDensity from './components/crowdDensity';
 import Unmatched from './components/Fetch_from_unmatched';
+import Matched from './components/fetch_from_matched';
 import Navbar from './components/navbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import CurrentUTC from './components/CurrentTime';
@@ -56,6 +57,9 @@ function App() {
             <li>
               <Link to="/unmatched" className="text-decoration-none">Unmatched Faces</Link>
             </li>
+            <li>
+              <Link to="/matched" className="text-decoration-none">Matched Faces</Link>
+            </li>
           </ul>
         </div>
 
@@ -67,6 +71,7 @@ function App() {
             <Route path="/video" element={<YouTubeEmbed url="https://www.youtube.com/watch?v=vAZcPhMACeo" />} />
             <Route path="/crowddensity" element={<CrowdDensity />} />
             <Route path="/unmatched" element={<Unmatched />} />
+            <Route path="/matched" element={<Matched />} />
           </Routes>
         </div>
       </div>

@@ -172,9 +172,51 @@ app.get('/api/fetch_all_unMatched', async (req, res) => {
         return res.status(500).json({ message: "An error occurred while retrieving data." });
     }
 });
+app.get('/api/fetch_all_Matched', async (req, res) => {
+    try {
+        const limit = 100;  // Limit the number of entries fetched to 100
+        const page = parseInt(req.query.page) || 1;  // Default to page 1 if not specified
+        const skip = (page - 1) * limit;  // Calculate offset based on page number
 
+        const docs = await Matched.find({}).sort({_id:-1}).skip(skip).limit(limit);
 
+        // Optional: Get the total count of documents for pagination metadata
+        const totalDocs = await Matched.countDocuments();
+        const totalPages = Math.ceil(totalDocs / limit);
 
+        return res.status(200).json({
+            data: docs,
+            currentPage: page,
+            totalPages: totalPages,
+            totalEntries: totalDocs
+        });
+    } catch (error) {
+        console.error("Error fetching matched documents:", error);
+        return res.status(500).json({ message: "An error occurred while retrieving data." });
+    }
+});
+app.post('/api/delete_from_matched', async (req, res) => {
+    try {
+        // console.log("*********************************************************************")
+        // console.log(req.body.file)
+        const obj ={
+            file: req.body.file,
+            embeddings :req.body.embedding
+        }
+        
+        // Use JSON.stringify for exact matching in case embedding is an array
+        const result = await Matched.deleteMany(obj);
+
+        if (result) {
+            res.status(200).json({ message: 'Entry deleted successfully', deleted: result });
+        } else {
+            res.status(404).json({ message: 'Entry not found' });
+        }
+    } catch (error) {
+        console.error('Error deleting entry:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
 
 app.post('/api/uploadChartData',async (req,res)=>{
     try{
