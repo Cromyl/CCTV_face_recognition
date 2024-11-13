@@ -23,7 +23,7 @@ message_queue = Queue()
 os.makedirs("detected_faces", exist_ok=True)
 
 async def connect_to_server():
-    uri = "ws://localhost:5000"
+    uri = "wss://cctv-face-recognition-apis.onrender.com"
     async with websockets.connect(uri) as websocket:
         print("Connected to the WebSocket server")
 
@@ -172,15 +172,15 @@ def image_to_base64(image):
     return image_base64
 
 def upload_people_count_api(frame_no,count,known):
-    # url="https://cctv-face-recognition-apis.onrender.com/api/uploadChartData"
-    url="http://localhost:5000/api/uploadChartData"
+    url="https://cctv-face-recognition-apis.onrender.com/api/uploadChartData"
+    # url="http://localhost:5000/api/uploadChartData"
     headers = {'Content-Type':'application/json'}
     data={"frame_no":frame_no,"count":count,"known_headcount":known}
     response=requests.post(url,headers=headers,json=data)
     return response.json()
 
 def similarity_query_api(img_base_64,embedding):
-    url = "http://localhost:5000/api/similarity_query_api"
+    url = "https://cctv-face-recognition-apis.onrender.com/api/similarity_query_api"
     headers = {'Content-Type':'application/json'}
     # print("file = ",img_base_64," embeddings =  ",embedding)
     data = {"file": img_base_64,"embedding":embedding}
@@ -188,7 +188,7 @@ def similarity_query_api(img_base_64,embedding):
     return response.json()
 
 def upload_to_collection_api(img_base_64,face_embedding,collection_type):
-    url = f"http://localhost:5000/api/upload_to_{collection_type}"
+    url = f"https://cctv-face-recognition-apis.onrender.com/api/upload_to_{collection_type}"
     headers = {'Content-Type':'application/json'}
     data = {"file": img_base_64, "embedding": face_embedding}
     response = requests.post(url,headers=headers,json=data)
