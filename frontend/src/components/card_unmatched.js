@@ -3,6 +3,37 @@ import React from 'react';
 function Card({ fileName, embeddings ,onRemove}) {
   const base64ToImageSrc = (base64String) => `data:image/jpeg;base64,${base64String}`;
 
+  const handleReject = async () =>{
+    try {
+      const requestBody = {
+        file: fileName,
+        embedding: embeddings
+      };
+
+      const response = await fetch('https://cctv-face-recognition-apis.onrender.com/api/delete_from_unmatched', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // alert(result.message);
+        onRemove();
+      } else {
+        const error = await response.json();
+        console.error('Server Error:', error);
+        alert(`Error: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      alert('Failed to upload data');
+    }
+    onRemove();
+  }
+
   const handleAccept = async () => {
     try {
       const requestBody = {
@@ -49,7 +80,7 @@ return (
           <button className="btn btn-success " onClick={handleAccept} style={{ marginRight: '5px' }}>
             Accept
           </button>
-          <button className="btn btn-danger" onClick={onRemove}>
+          <button className="btn btn-danger" onClick={handleReject}>
             Decline
           </button>
         </div>
