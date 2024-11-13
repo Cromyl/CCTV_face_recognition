@@ -1,70 +1,132 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 📸 CCTV Face Recognition Security System
 
-## Available Scripts
+A real-time CCTV-based security system that detects faces, recognizes known individuals, and alerts the user of unknown entries. The system provides analytical insights through various graphs, such as crowd density and known vs. unknown headcount. This project integrates React.js for the frontend, Node.js for the backend, and Python for face detection and recognition. All data, including face images and their embeddings, are stored in MongoDB Atlas.
 
-In the project directory, you can run:
+## 🚀 Key Features
+**Real-Time Face Detection & Recognition:** Detects faces from CCTV camera feeds and classifies them as known or unknown.
 
-### `npm start`
+**Unmatched Faces Alert:** Displays unmatched faces to the user, allowing them to accept or reject entries.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**Dynamic Database Management:** Known faces are stored in a "matched" collection, while new/unknown faces are shown to the user.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Users can manually move faces between the matched and unmatched collections.
 
-### `npm test`
+**Analytics Dashboard:** 
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Crowd Density:** Monitors the number of people detected in each frame.
 
-### `npm run build`
+**Rolling Average (Last 40 Frames):** Provides a moving average for crowd count over time.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**Known vs. Unknown Headcount:** Visualizes the proportion of known vs. unknown individuals detected.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Technology Stack:
+**Frontend:** React.js
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Backend:** Node.js with Express
 
-### `npm run eject`
+**Face Detection & Recognition:** Python (OpenCV,YOLO (YOLOv3) for detecting people in frames,MTCNN model for detecting faces in frames,FaceNet (InceptionResnetV1)	Generating embeddings for face recognition )
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+**Database:** MongoDB Atlas (storing images in Base64 format with embeddings)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## ⚙️ Installation & Setup
+**Prerequisites**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Node.js (v16+)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Python (v3.8+)
 
-## Learn More
+MongoDB Atlas account
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+npm & pip package managers
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Step 1
 
-### Code Splitting
+```bash
+git clone https://github.com/Cromyl/CCTV_face_recognition.git
+cd CCTV_face_recognition
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
+## Step 2: Set Up the Python Environment
+Download following files.
 
-### Analyzing the Bundle Size
+https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+https://github.com/patrick013/Object-Detection---Yolov3/blob/master/model/yolov3.weights
 
-### Making a Progressive Web App
+```bash
+pip install -r requirements.txt
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+## Step 3: Set Up the Backend
 
-### Advanced Configuration
+```bash
+cd api
+npm install
+npm start
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
 
-### Deployment
+## Step 4 : Set up the frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+cd frontend
+npm install
+npm start
 
-### `npm run build` fails to minify
+```
+## Step 5 : To run face detectection script
+```bash
+python face_detection_cctv.py
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🖥️ How It Works
+**1. Face Detection & Recognition**
+
+The system uses OpenCV and the face_recognition library to detect faces in real-time from CCTV camera feeds.
+If a detected face matches an entry in the database (based on embeddings), it is considered "known"; otherwise, it is flagged as "unknown".
+
+**2. Database Management**
+MongoDB Atlas is used to store:
+Face images in Base64 format
+Corresponding embeddings for efficient face matching
+Real-time analytics data (crowd count, known vs. unknown headcount, etc.)
+When an unmatched face is detected, the user can manually accept it as a known person, moving the entry from the "unmatched" collection to the "matched" collection.
+
+**3. Analytics Dashboard**
+
+Crowd Density: Number of faces detected per frame.
+
+Rolling Average (Last 40 Frames): Averages the crowd density over the last 40 frames.
+
+Known vs. Unknown Headcount: A graph that visualizes the ratio of known to unknown individuals.
+
+
+**4. API Endpoints**
+
+**/api/similarity_query_api** -	Performs a vector search on the Matched collection. Returns isMatched: true if score > 0.97.
+
+**/api/upload_to_unMatched** -Uploads a new document to the unMatched collection if it doesn't already exist.
+
+**/api/upload_to_Matched**	-Moves a document from unMatched to Matched collection. Deletes from unMatched if found.
+
+**/api/delete_from_unmatched**-	Deletes a document from the unMatched collection based on file and embedding.
+
+**/api/fetch_all_unMatched**-	Fetches all documents from the unMatched collection with pagination (default limit: 100).
+
+**/api/fetch_all_Matched**-	Fetches all documents from the Matched collection with pagination (default limit: 100).
+
+**/api/delete_from_matched**-	Deletes documents from the Matched collection based on file and embedding.
+
+**/api/uploadChartData**-	Uploads chart data (frame number, count, known headcount) to the chartModel collection.
+
+**/api/fetchChartData**	-Fetches all chart data from the chartModel collection.
+
+**/api/deleteChartData**-	Deletes all documents in the chartModel collection.
+
+
+## 📧 Contact
+Shruti - shrutibilolikar2003@gmail.com
+
+Kaushik - as920078.kaushikmullick@gmail.com
+
