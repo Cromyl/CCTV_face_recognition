@@ -38,7 +38,7 @@ wss.on('connection', (ws) => {
     clients.push(ws);
 
     ws.on('message', (data) => {
-        console.log('Received:', data.toString());
+        // console.log('Received:', data.toString());
 
         // Broadcast data to all other clients
         clients.forEach((client) => {
@@ -86,7 +86,7 @@ app.post('/api/similarity_query_api', async (req,res)=>{
         result.forEach(elem => {
             score = elem.score;
         });
-        console.log("SCORE_____________",score);
+        // console.log("SCORE_____________",score);
         if(score>0.97){
             const obj = {
                 // "file":req.body.file,

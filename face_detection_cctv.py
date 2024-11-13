@@ -152,7 +152,7 @@ def capture_and_detect_faces(stream_url, mtcnn, face_model, yolo_net, output_lay
             upload_people_count_api(capture_count,headcount,known_headcount)
             # writer.writerow([capture_count, headcount])
             # file.flush()
-            print(f'Processed and saved detected faces for frame {capture_count}.')
+            # print(f'Processed and saved detected faces for frame {capture_count}.')
 
         frame_count += 1
         time.sleep(1 / frame_rate)
@@ -206,12 +206,12 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             if(size<1000):
                 continue
             face_filename = f"detected_faces/frame_{frame_index}_face_{i + 1}.jpg"
-            try:
-                cv2.imwrite(face_filename, face)
-            except Exception as e:
-                continue;
+            # try:
+            #     cv2.imwrite(face_filename, face)
+            # except Exception as e:
+            #     continue;
             
-            print(f"Saved detected face to {face_filename}")
+            # print(f"Saved detected face to {face_filename}")
 
             # Calculate the embedding
             face_rgb = cv2.resize(face, (160, 160))
@@ -225,10 +225,10 @@ def detect_faces_in_frame(frame, mtcnn, face_model, frame_index):
             collection_type = "Matched" if is_match else "unMatched"
             if collection_type=="unMatched":
                 uploaded = upload_to_collection_api(img_base_64,embedding,collection_type)
-                if uploaded:
-                    print("Succesfully uploaded")
-                else:
-                    print("Uploading failed")
+                # if uploaded:
+                #     print("Succesfully uploaded")
+                # else:
+                #     print("Uploading failed")
             else:
                 count_known+=1
         
@@ -255,7 +255,7 @@ def write(message):
 
 # Execution
 response = requests.delete("http://localhost:5000/api/deleteChartData")
-print(response)
+# print(response)
 # client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # client_socket.connect(('127.0.0.1', 65432))
 # asyncio.run(connect_to_server())
@@ -269,9 +269,9 @@ youtube_url = 'https://www.youtube.com/watch?v=vAZcPhMACeo'
 # youtube_url='https://www.youtube.com/watch?v=tcUSoJMU2AQ'
 # youtube_url="https://www.youtube.com/watch?v=9LyZGu_Lrg8"
 stream_url = get_youtube_video_url(youtube_url)
-print("Stream URL:", stream_url)
+# print("Stream URL:", stream_url)
 match = re.search(r'[?&]t=(\d+)s?', youtube_url)
-print("Time = ",match)
+# print("Time = ",match)
 
 # Load models
 mtcnn, face_model = load_face_detection_model()

@@ -9,7 +9,7 @@ function Navbar() {
   return (
     <header className="navbar navbar-expand-lg navbar-dark bg-black sticky-top">
       <div className="container">
-        <a href="/" className="navbar-brand custom-brand ">App Name</a>
+        <a href="/" className="navbar-brand custom-brand ">CCTV insights</a>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
