@@ -23,7 +23,7 @@ message_queue = Queue()
 os.makedirs("detected_faces", exist_ok=True)
 
 async def connect_to_server():
-    uri = "ws://localhost:65432"
+    uri = "ws://localhost:5000"
     async with websockets.connect(uri) as websocket:
         print("Connected to the WebSocket server")
 
@@ -172,6 +172,7 @@ def image_to_base64(image):
     return image_base64
 
 def upload_people_count_api(frame_no,count,known):
+    # url="https://cctv-face-recognition-apis.onrender.com/api/uploadChartData"
     url="http://localhost:5000/api/uploadChartData"
     headers = {'Content-Type':'application/json'}
     data={"frame_no":frame_no,"count":count,"known_headcount":known}
@@ -254,7 +255,7 @@ def write(message):
     message_queue.put(message)
 
 # Execution
-response = requests.delete("http://localhost:5000/api/deleteChartData")
+response = requests.delete("https://cctv-face-recognition-apis.onrender.com/api/deleteChartData")
 # print(response)
 # client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # client_socket.connect(('127.0.0.1', 65432))

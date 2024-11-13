@@ -13,7 +13,7 @@ const CrowdDensity = () => {
 
     const fetchInitialData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/fetchChartData');
+            const response = await axios.get('https://cctv-face-recognition-apis.onrender.com/api/fetchChartData');
             const initialData = response.data;
 
             const xValues = initialData.map(entry => entry.frame_no);
@@ -139,7 +139,7 @@ const CrowdDensity = () => {
     };
 
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:65432');
+        const ws = new WebSocket('ws://cctv-face-recognition-apis.onrender.com:65432');
 
         ws.onopen = () => {
             console.log('Connected to WebSocket server');
@@ -160,7 +160,7 @@ const CrowdDensity = () => {
             console.log('WebSocket connection closed:', event);
             if (!event.wasClean) {
                 console.log('Reconnecting...');
-                setTimeout(() => setWs(new WebSocket('ws://localhost:65432')), 1000);
+                setTimeout(() => setWs(new WebSocket('ws://cctv-face-recognition-apis.onrender.com:65432')), 1000);
             }
         };
 

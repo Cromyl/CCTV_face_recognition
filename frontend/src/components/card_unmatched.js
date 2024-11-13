@@ -10,7 +10,7 @@ function Card({ fileName, embeddings ,onRemove}) {
         embedding: embeddings
       };
 
-      const response = await fetch('http://localhost:5000/api/upload_to_Matched', {
+      const response = await fetch('https://cctv-face-recognition-apis.onrender.com/api/upload_to_Matched', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

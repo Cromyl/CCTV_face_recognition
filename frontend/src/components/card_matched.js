@@ -10,7 +10,7 @@ function CardMatched({ fileName, embeddings ,onRemove}) {
         embedding: embeddings
       };
 
-      const response = await fetch('http://localhost:5000/api/delete_from_matched', {
+      const response = await fetch('https://cctv-face-recognition-apis.onrender.com/api/delete_from_matched', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

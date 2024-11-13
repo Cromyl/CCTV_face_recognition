@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import CardMatched from './card_matched';
 
-const URL = `http://localhost:5000/api/fetch_all_Matched`;
+const URL = `https://cctv-face-recognition-apis.onrender.com/api/fetch_all_Matched`;
 
 function Matched() {
     const [temp, setTemp] = useState([]);

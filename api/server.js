@@ -1,57 +1,61 @@
 import express from "express";
 import connect from "./database/conn.js";
-import net from 'net';
-// import Post from "./model/post.js";
 import cors from "cors";
-// import { WebSocket } from "ws";
-import WebSocket, {WebSocketServer} from 'ws';
-
-import { model1 as Matched, model2 as unMatched, chartModel as lineGraph, chartModel } from "./model/post.js";
+import { WebSocketServer } from "ws";  // Import WebSocketServer directly from 'ws'
+import { model1 as Matched, model2 as unMatched, chartModel } from "./model/post.js";
 
 const app = express();
-app.use(express.json());
 const port = 5000;
 const clients = [];
 
+// Middleware for JSON body parsing and CORS
+app.use(express.json());
 app.use(cors({
-    origin: '*' // Allow requests from this origin
-  }));
+  origin: '*' // Allow requests from this origin
+}));
 
-
-  connect().then(() => {
+// Connect to the database and start the Express server
+connect().then(() => {
     try {
-        app.listen(port, () => {
-            console.log(`Server connected to port ${port}`)
-        })
+        const httpServer = app.listen(port, () => {
+            console.log(`Server connected to port ${port}`);
+        });
+
+        // Create a WebSocket server that shares the same HTTP server
+        const wss = new WebSocketServer({ noServer: true });
+
+        // Handling new WebSocket connections
+        wss.on('connection', (ws) => {
+            console.log('New client connected');
+            clients.push(ws);
+
+            ws.on('message', (data) => {
+                // Broadcast data to all other clients
+                clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(data);
+                    }
+                });
+            });
+
+            ws.on('close', () => {
+                console.log('Client disconnected');
+                clients.splice(clients.indexOf(ws), 1);
+            });
+        });
+
+        // Upgrade HTTP connections to WebSocket
+        httpServer.on('upgrade', (req, socket, head) => {
+            wss.handleUpgrade(req, socket, head, (ws) => {
+                wss.emit('connection', ws, req);
+            });
+        });
+
     } catch (error) {
-        console.log("Cannot connect to the server");
+        console.log("Cannot connect to the server", error);
     }
 }).catch((error) => {
-    console.log(error)
-    console.log("Invalid DB Connection")
-})
-
-const wss = new WebSocketServer({ port: 65432 });
-
-wss.on('connection', (ws) => {
-    console.log('New client connected');
-    clients.push(ws);
-
-    ws.on('message', (data) => {
-        // console.log('Received:', data.toString());
-
-        // Broadcast data to all other clients
-        clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(data);
-            }
-        });
-    });
-
-    ws.on('close', () => {
-        console.log('Client disconnected');
-        clients.splice(clients.indexOf(ws), 1);
-    });
+    console.log("Invalid DB Connection", error);
 });
 
 
@@ -86,7 +90,8 @@ app.post('/api/similarity_query_api', async (req,res)=>{
         result.forEach(elem => {
             score = elem.score;
         });
-        // console.log("SCORE_____________",score);
+        console.log("SCORE_____________",score);
+        
         if(score>0.97){
             const obj = {
                 // "file":req.body.file,
